@@ -10,16 +10,16 @@ app.use(express.json());
 app.use(express.static('public'));
 
 app.get('/notes', function (req, res){
-    res.sendFile(path.join(__dirname, '/public/notes.html'));
+    res.sendFile(path.join(__dirname, '/Develop/public/notes.html'));
 });
 app.get('/api/notes', function (req, res) {
-    gtetNotes(function (err, data){
+    getNotes(function (err, data){
         res.json(data);
     });
 });
 
 app.get('*', function (req, res) {
-    res.sendFile(path.join(__dirname, '/public/index.html'));
+    res.sendFile(path.join(__dirname, '/Develop/public/index.html'));
 });
 
 app.post('/api/notes/:id', function (req, res) {
@@ -31,10 +31,18 @@ app.post('/api/notes/:id', function (req, res) {
 
 app.delete('/api/notes', function (req, res) {
     deleteNotes(req);
-    res.sendFile(path.join(__dirname, '/public/notes.hmtl'));
+    res.sendFile(path.join(__dirname, '/Develop/public/notes.html'));
 })
 
-function postNotes(cb) {
+function getNotes(cb) {
+    fs.readFile(path.join(__dirname, '/db/db.json'), 'utf8', function (err, data) {
+        if (err) throw err;
+        cb(null, JSON.parse(data));
+    })
+};
+
+
+function postNotes(note, cb) {
     fs.readFileSync(path.join(__dirname, 'db/db.json'), 'utf8', function (err,data) {
         if (err) throw err;
         const notes = JSON.parse(data)
@@ -47,3 +55,15 @@ function postNotes(cb) {
         })
     })
 };
+function deleteNotes(req) {
+    fs.readFile(path.join(__dirname, '/db/db.json'), function (err, data) {
+        if (err) throw err;
+        const notes = JSON.parse(data);
+        const newNotes = notes.filter((item) => item.id != req.params.id);
+        fs.writeFile(path.join(__dirname, '/db/db.json'), JSON.stringify(newNotes), function () {});
+    })
+}
+
+app.listen(PORT, function () {
+    console.log('App is listening on PORT: ' + PORT);
+});
